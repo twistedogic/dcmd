@@ -7,15 +7,11 @@ import (
 
 	"github.com/twistedogic/dcmd/pkg/docker"
 	"github.com/twistedogic/dcmd/pkg/file"
+	"github.com/urfave/cli"
 )
 
-func main() {
-	args := os.Args[1:]
-	if len(args) < 1 {
-		log.Fatalf("missing image")
-	}
+func run(image string, args []string) error {
 	var command string
-	image, args := args[0], args[1:]
 	hasEntrypoint := docker.HasEntrypoint(image)
 	if !hasEntrypoint {
 		command, args = args[0], args[1:]
@@ -37,8 +33,22 @@ func main() {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		fmt.Println(cmd.Args)
+	return cmd.Run()
+}
+
+func main() {
+	app := cli.NewApp()
+	app.Name = "dcmd"
+	app.Usage = "run docker container as command with auto file mount"
+	app.Action = func(c *cli.Context) error {
+		args := c.Args()
+		if args.First() == "" {
+			return fmt.Errorf("missing image")
+		}
+		image, args := args.First(), args.Tail()
+		return run(image, args)
+	}
+	if err := app.Run(os.Args); err != nil {
 		log.Fatal(err)
 	}
 }
