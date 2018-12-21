@@ -16,16 +16,22 @@ func run(image string, args []string) error {
 	if !hasEntrypoint {
 		command, args = args[0], args[1:]
 	}
-	volArgs := []string{}
-	for i, a := range args {
-		if fp, err := file.GetFilePath(a); err == nil {
-			sfp := file.SyntheticPath(fp)
-			volMount := fmt.Sprintf("%s:%s", file.DirPath(fp), file.DirPath(sfp))
-			volArg := []string{"-v", volMount}
-			volArgs = append(volArgs, volArg...)
-			args[i] = sfp
-		}
+	pwd, err := os.Getwd()
+	if err != nil {
+		return err
 	}
+	workspace := file.CreateWorkspaceName()
+	workspaceArg := []string{"-w", workspace}
+	volArgs := append(workspaceArg, "-v", fmt.Sprintf("%s:%s", pwd, workspace))
+	// for i, a := range args {
+	// 	if fp, err := file.GetFilePath(a); err == nil {
+	// 		sfp := file.SyntheticPath(fp)
+	// 		volMount := fmt.Sprintf("%s:%s", file.DirPath(fp), file.DirPath(sfp))
+	// 		volArg := []string{"-v", volMount}
+	// 		volArgs = append(volArgs, volArg...)
+	// 		args[i] = sfp
+	// 	}
+	// }
 	if !hasEntrypoint {
 		args = append([]string{command}, args...)
 	}

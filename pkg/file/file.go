@@ -1,9 +1,17 @@
 package file
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 )
+
+const WORKSPACE_PREFIX = "/workplace"
+
+func CreateWorkspaceName() string {
+	return fmt.Sprintf("%s_%d", WORKSPACE_PREFIX, time.Now().Unix())
+}
 
 func isRootPath(fp string) bool {
 	return []rune(fp)[0] == '/'
@@ -24,5 +32,5 @@ func GetFilePath(fp string) (string, error) { //TODO: should only return volume
 }
 
 func SyntheticPath(fp string) string {
-	return filepath.Join("/workspace", fp)
+	return filepath.Join(CreateWorkspaceName(), fp)
 }
