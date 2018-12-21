@@ -43,7 +43,7 @@ func main() {
 	app.Action = func(c *cli.Context) error {
 		args := c.Args()
 		if args.First() == "" {
-			return fmt.Errorf("missing image")
+			cli.ShowAppHelpAndExit(c, 0)
 		}
 		image, args := args.First(), args.Tail()
 		return run(image, args)
