@@ -2,6 +2,8 @@ package docker
 
 import (
 	"os/exec"
+	"regexp"
+	"strconv"
 )
 
 const docker = "docker"
@@ -25,4 +27,19 @@ func HasEntrypoint(image string) bool {
 		return false
 	}
 	return string(out) == "[]"
+}
+
+func GetExposePorts(image string) []int {
+	args := []string{"image", "inspect", "-f", "'{{.Config.ExposedPorts}}'", image}
+	out, err := dockerCmd(args...).CombinedOutput()
+	if err != nil {
+		return make([]int, 0)
+	}
+	pattern := regexp.MustCompile("([0-9]+)")
+	portString := pattern.FindAllString(string(out), -1)
+	ports := make([]int, len(portString))
+	for i, v := range portString {
+		ports[i], _ = strconv.Atoi(v)
+	}
+	return ports
 }

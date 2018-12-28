@@ -13,6 +13,7 @@ import (
 func run(image string, args []string) error {
 	var command string
 	hasEntrypoint := docker.HasEntrypoint(image)
+	ports := docker.GetExposePorts(image)
 	if !hasEntrypoint {
 		command, args = args[0], args[1:]
 	}
@@ -22,7 +23,10 @@ func run(image string, args []string) error {
 	}
 	workspace := file.CreateWorkspaceName()
 	workspaceArg := []string{"-w", workspace}
-	volArgs := append(workspaceArg, "-v", fmt.Sprintf("%s:%s", pwd, workspace))
+	workspaceArg = append(workspaceArg, "-v", fmt.Sprintf("%s:%s", pwd, workspace))
+	for _, p := range ports {
+		workspaceArg = append(workspaceArg, "-p", fmt.Sprintf("%d:%d", p, p))
+	}
 	// for i, a := range args {
 	// 	if fp, err := file.GetFilePath(a); err == nil {
 	// 		sfp := file.SyntheticPath(fp)
@@ -35,7 +39,7 @@ func run(image string, args []string) error {
 	if !hasEntrypoint {
 		args = append([]string{command}, args...)
 	}
-	cmd := docker.CreateCmd(image, volArgs, args)
+	cmd := docker.CreateCmd(image, workspaceArg, args)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -52,6 +56,9 @@ func main() {
 			cli.ShowAppHelpAndExit(c, 0)
 		}
 		image, args := args.First(), args.Tail()
+		if len(args) == 0 {
+			return run(image, []string{"bash"})
+		}
 		return run(image, args)
 	}
 	if err := app.Run(os.Args); err != nil {
